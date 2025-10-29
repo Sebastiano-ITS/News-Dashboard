@@ -88,14 +88,14 @@ body {
 /* Notizie Basso Sinistra (2x2 grid) */
 .news-grid-bottom-left {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr 1fr 1fr;
   gap: 16px;
 }
 
 /* Notizie Centro Destra (2x2 grid) */
 .news-middle-right {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
   gap: 16px;
 }
 
