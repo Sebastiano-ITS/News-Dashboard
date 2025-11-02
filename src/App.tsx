@@ -1,5 +1,7 @@
-import React, { useEffect, useState, useMemo } from "react";
-import './App.css';
+import React, { useEffect, useState } from "react"; 
+import "./App.css"; 
+import WeatherCarousel from './WeatherCarousel'; 
+import NewsCarousel from './NewsCarousel'; 
 
 /**
  * Interfaccia per un elemento RSS.
@@ -16,263 +18,177 @@ interface RSSItem {
 // URL per il proxy CORS
 const CORS_PROXY = "https://api.allorigins.win/raw?url=";
 
-// Array di fonti RSS
+// Array di fonti RSS (AGGIUNTE NUOVE FONTI ITALIANE E SPORT)
 const RSS_SOURCES = [
   { name: "ANSA Italia", url: "https://www.ansa.it/sito/notizie/topnews/topnews_rss.xml" },
   { name: "LA STAMPA Mondo", url: "https://www.lastampa.it/rss/esteri.xml" },
-  { name: "IL SOLE 24 ORE Economia", url: "https://www.ilsole24ore.com/rss/finanza.xml" },
-  { name: "CORRIERE SPORT", url: "https://www.corrieredellosport.it/rss/calcio/serie-a" },
-  { name: "REPUBBLICA Cronaca", url: "https://www.repubblica.it/rss/cronaca/rss2.0.xml" },
-  { name: "BBC WORLD", url: "http://feeds.bbci.co.uk/news/world/rss.xml" }, 
-  { name: "CNN Tech", url: "http://rss.cnn.com/rss/cnn_tech.rss" }, 
-  { name: "REUTERS", url: "https://feeds.reuters.com/reuters/businessNews" }, 
+  { name: "IL SOLE 24 ORE Economia", url: "https://www.ilsole24ore.com/rss/italia.xml" },
+  { name: "CORRIERE della SERA", url: "https://www.corriere.it/rss/homepage.xml" }, // Nuova Fonte
+  { name: "REPUBBLICA News", url: "https://www.repubblica.it/rss/homepage/rss2.0.xml" }, // Nuova Fonte
+  { name: "GAZZETTA dello SPORT", url: "https://www.gazzetta.it/rss/homepage.xml" }, // Nuova Fonte (Sport)
+  { name: "BBC World", url: "http://feeds.bbci.co.uk/news/world/rss.xml" },
 ];
 
-// DEFINIZIONI DEL LAYOUT DESIDERATO (Totale = 18 notizie)
-const NEWS_BOTTOM_LEFT_COUNT = 6;   // 2x2 card sotto il video
-const NEWS_TOP_RIGHT_COUNT = 1;      // Card grande orizzontale
-const NEWS_MIDDLE_RIGHT_COUNT = 6;    // 2x2 card sotto la card principale
-const NEWS_BOTTOM_RIGHT_EXTRA = 9;   // Card extra per riempire il fondo
-const NEWS_TOTAL_DISPLAYED = NEWS_BOTTOM_LEFT_COUNT + NEWS_TOP_RIGHT_COUNT + NEWS_MIDDLE_RIGHT_COUNT + NEWS_BOTTOM_RIGHT_EXTRA; // 18
+// Definizioni delle quantità di notizie per ciascuna sezione
+const NEWS_BOTTOM_LEFT_COUNT = 4;   
+const NEWS_TOP_RIGHT_COUNT = 1;      
+const NEWS_MIDDLE_RIGHT_COUNT = 4;    
+const NEWS_CAROUSEL_COUNT = 5; 
 
-// Costante per la rotazione (2 minuti = 120000 ms)
-const ROTATION_INTERVAL_MS = 120000; 
-// Pre-carica un pool di notizie
-const NEWS_PRELOAD_COUNT = NEWS_TOTAL_DISPLAYED * 5; 
-
-/**
- * Funzione per estrarre il testo da un elemento XML.
- */
-const getTextContent = (element: Element | null | undefined, tag: string): string | undefined => {
-    return element?.getElementsByTagName(tag)?.[0]?.textContent ?? undefined;
-};
-
-/**
- * Funzione per estrarre l'attributo url da un elemento media:content o enclosure.
- */
-const getMediaUrl = (element: Element | null | undefined): string | undefined => {
-    const enclosure = element?.getElementsByTagName('enclosure')?.[0]?.getAttribute('url');
-    if (enclosure) return enclosure;
-
-    const mediaContent = element?.getElementsByTagName('media:content')?.[0] || element?.getElementsByTagName('content')?.[0];
-    const url = mediaContent?.getAttribute('url') || mediaContent?.getAttribute('src');
-    if (url) return url;
-    
-    const linkElements = Array.from(element?.getElementsByTagName('link') ?? []);
-    const linkElement = linkElements.find(
-        (e: Element) => e.getAttribute('rel') === 'enclosure' || (e.getAttribute('type')?.startsWith('image') && e.getAttribute('href'))
-    );
-    return linkElement?.getAttribute('href') ?? undefined;
-};
+const TOTAL_NEWS_COUNT = NEWS_BOTTOM_LEFT_COUNT + NEWS_TOP_RIGHT_COUNT + NEWS_MIDDLE_RIGHT_COUNT + NEWS_CAROUSEL_COUNT;
 
 
 const App: React.FC = () => {
-  const [allNews, setAllNews] = useState<RSSItem[]>([]); 
-  const [startIndex, setStartIndex] = useState(0); 
-  const [isFading, setIsFading] = useState(false); 
-  const [isLoading, setIsLoading] = useState(true);
+  const [news, setNews] = useState<RSSItem[]>([]);
+  const [loadingNews, setLoadingNews] = useState(true);
 
-  // --- 1. Logica di caricamento dei dati RSS ---
-  useEffect(() => {
+  // Funzione per estrarre il testo da un elemento XML
+  const getTextContent = (element: Element | null, tagName: string): string | undefined => {
+      const node = element?.querySelector(tagName);
+      return node?.textContent || undefined;
+  }
+  
+  // Funzione per estrarre l'attributo src/url da un elemento media/enclosure
+  const getMediaUrl = (element: Element | null): string | undefined => {
+      const mediaContent = element?.querySelector('enclosure') || 
+                           element?.querySelector('media\\:content') || 
+                           element?.querySelector('media\\:thumbnail');
+      return mediaContent?.getAttribute('url') || mediaContent?.getAttribute('href') || undefined;
+  }
+  
+  // Funzione di rendering per le card (NON carosello)
+  const renderCard = (item: RSSItem, index: number, layoutType: 'vertical' | 'horizontal-small' | 'horizontal-large') => {
+    const hasImage = !!item.enclosureUrl;
+    let finalLayoutClass = layoutType;
 
-    const fetchRSS = async (url: string, sourceName: string): Promise<RSSItem[]> => {
-      try {
-        const res = await fetch(CORS_PROXY + encodeURIComponent(url));
-        const xmlText = await res.text();
-        
-        const parser = new DOMParser();
-        const xmlDoc = parser.parseFromString(xmlText, "text/xml");
-        
-        let items: Element[] = [];
-        
-        const rssItems = xmlDoc.getElementsByTagName('item');
-        if (rssItems.length > 0) {
-            items = Array.from(rssItems);
-        } else {
-            const atomItems = xmlDoc.getElementsByTagName('entry');
-            items = Array.from(atomItems);
-        }
-
-        return items
-            .map((item) => {
-                const title = getTextContent(item, 'title');
-                const linkElement = item.getElementsByTagName('link')[0];
-                const link = linkElement?.getAttribute('href') || getTextContent(item, 'link') || getTextContent(item, 'guid') || getTextContent(item, 'id');
-                const description = getTextContent(item, 'description') || getTextContent(item, 'summary');
-                const enclosureUrl = getMediaUrl(item);
-                const dateString = getTextContent(item, 'pubDate') || getTextContent(item, 'updated');
-                
-                if (!title || !link || !dateString) return null;
-                
-                const pubDate = new Date(dateString) || new Date();
-
-                return {
-                    title: title,
-                    link: link,
-                    description: description,
-                    enclosureUrl: enclosureUrl,
-                    source: sourceName,
-                    pubDate: pubDate,
-                } as RSSItem;
-            })
-            .filter((item): item is RSSItem => item !== null)
-            .slice(0, NEWS_PRELOAD_COUNT * 2); 
-      } catch (err) {
-        console.error(`Errore fetch RSS per ${sourceName}:`, err);
-        return [];
-      }
-    };
-
-    const loadNews = async () => {
-      setIsLoading(true);
-      const promises = RSS_SOURCES.map(source => 
-        fetchRSS(source.url, source.name)
-      );
-      const results = await Promise.all(promises);
-      let allFetchedNews = results.flat().filter(item => item.title);
-
-      allFetchedNews.sort((a, b) => b.pubDate.getTime() - a.pubDate.getTime());
-
-      // Bilanciamento (sempre preferito)
-      const newsWithImage = allFetchedNews.filter(item => item.enclosureUrl);
-      const newsWithoutImage = allFetchedNews.filter(item => !item.enclosureUrl);
-
-      let balancedPool: RSSItem[] = [];
-      let i = 0, j = 0;
-
-      while (balancedPool.length < NEWS_PRELOAD_COUNT && (i < newsWithImage.length || j < newsWithoutImage.length)) {
-          if (i < newsWithImage.length) {
-              balancedPool.push(newsWithImage[i]);
-              i++;
-          }
-          if (balancedPool.length < NEWS_PRELOAD_COUNT && j < newsWithoutImage.length) {
-              balancedPool.push(newsWithoutImage[j]);
-              j++;
-          }
-      }
-      
-      const finalPool = balancedPool.length > NEWS_TOTAL_DISPLAYED ? balancedPool : allFetchedNews.slice(0, NEWS_PRELOAD_COUNT);
-
-      setAllNews(finalPool);
-      setIsLoading(false);
-    };
-
-    loadNews();
-  }, []); 
-
-  // --- 2. Logica di Rotazione (Timer) ---
-  useEffect(() => {
-    if (allNews.length < NEWS_TOTAL_DISPLAYED * 2 || isLoading) return;
-
-    const rotateNews = () => {
-        setIsFading(true);
-        
-        const transitionDuration = 500; 
-
-        const dataChangeTimeout = setTimeout(() => {
-            setStartIndex(prevIndex => {
-                const newIndex = prevIndex + NEWS_TOTAL_DISPLAYED;
-                return (newIndex >= allNews.length) ? 0 : newIndex;
-            });
-            setIsFading(false);
-        }, transitionDuration); 
-
-        return () => clearTimeout(dataChangeTimeout);
-    };
-
-    const intervalId = setInterval(rotateNews, ROTATION_INTERVAL_MS);
-
-    return () => clearInterval(intervalId);
-  }, [allNews.length, isLoading]); 
-
-  // --- 3. Suddivisione delle notizie visualizzate (Memoized) ---
-  const currentNews = useMemo(() => {
-    let newsSlice = allNews.slice(startIndex, startIndex + NEWS_TOTAL_DISPLAYED);
-
-    if (newsSlice.length < NEWS_TOTAL_DISPLAYED && allNews.length >= NEWS_TOTAL_DISPLAYED) {
-        const remaining = NEWS_TOTAL_DISPLAYED - newsSlice.length;
-        newsSlice = newsSlice.concat(allNews.slice(0, remaining));
-    }
-    while (newsSlice.length < NEWS_TOTAL_DISPLAYED) {
-      newsSlice.push({ title: "Notizia in aggiornamento...", link: "#", source: "System", pubDate: new Date() });
+    if (!hasImage && layoutType !== 'horizontal-small') {
+        finalLayoutClass = 'horizontal-small';
     }
     
-    return newsSlice;
-  }, [allNews, startIndex]);
-
-  // Suddivisione dello slice corrente
-  let currentSliceIndex = 0;
-  
-  const newsBottomLeft = currentNews.slice(currentSliceIndex, currentSliceIndex + NEWS_BOTTOM_LEFT_COUNT);
-  currentSliceIndex += NEWS_BOTTOM_LEFT_COUNT;
-  
-  const newsTopRight = currentNews.slice(currentSliceIndex, currentSliceIndex + NEWS_TOP_RIGHT_COUNT);
-  currentSliceIndex += NEWS_TOP_RIGHT_COUNT;
-  
-  const newsMiddleRight = currentNews.slice(currentSliceIndex, currentSliceIndex + NEWS_MIDDLE_RIGHT_COUNT);
-  currentSliceIndex += NEWS_MIDDLE_RIGHT_COUNT;
-
-  const newsBottomRightExtra = currentNews.slice(currentSliceIndex, currentSliceIndex + NEWS_BOTTOM_RIGHT_EXTRA);
-  currentSliceIndex += NEWS_BOTTOM_RIGHT_EXTRA;
-
-
-  const renderCard = (item: RSSItem, index: number, layoutType: 'vertical' | 'horizontal-large' | 'horizontal-small' = 'vertical') => {
-    
-    // Assegna la classe CSS appropriata
-    let extraClass = '';
-    if (layoutType === 'horizontal-large') extraClass = 'card-horizontal-large';
-    else if (layoutType === 'horizontal-small') extraClass = 'card-horizontal-small';
-    else if (layoutType === 'vertical') extraClass = 'card-vertical';
-
     return (
-      <div
-        key={item.link + index} 
-        className={`card ${extraClass} ${item.enclosureUrl ? 'has-image' : 'no-image'}`}
-        onClick={() => window.open(item.link, '_blank')}
+      <a 
+        key={index} 
+        href={item.link} 
+        target="_blank" 
+        rel="noopener noreferrer"
+        className={`card ${finalLayoutClass} ${hasImage ? 'with-img' : 'without-img'}`}
       >
-        {item.enclosureUrl && (
-            <img 
-                src={item.enclosureUrl} 
-                alt={item.title} 
-                onError={(e) => {
-                    const target = e.target as HTMLImageElement;
-                    target.onerror = null; 
-                    target.src = `https://placehold.co/100x100/333333/dddddd?text=NO+IMG`; 
-                }}
-            />
-        )}
+        {hasImage && <img src={item.enclosureUrl} alt={item.title} onError={(e) => (e.currentTarget.style.display = 'none')} />}
         <div className="content">
-          <span className="news-source">{item.source}</span>
           <h3>{item.title}</h3>
+          <div className="card-footer">
+            <span className="source-tag">{item.source}</span>
+          </div>
         </div>
-      </div>
+      </a>
     );
   };
   
-  if (isLoading) {
-    return (
-        <div className="page" style={{ justifyContent: 'center', alignItems: 'center' }}>
-            <h2 style={{ color: '#555' }}>Caricamento notizie in corso...</h2>
-        </div>
-    );
-  }
+  // Logica per il fetching dei feed RSS
+  const fetchRSS = async (source: { name: string; url: string }): Promise<RSSItem[]> => {
+    try {
+      const res = await fetch(CORS_PROXY + encodeURIComponent(source.url));
+      if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+      
+      const xmlText = await res.text();
+      const parser = new DOMParser();
+      const xmlDoc = parser.parseFromString(xmlText, "text/xml");
+
+      const items = Array.from(xmlDoc.querySelectorAll('item') || xmlDoc.querySelectorAll('entry'));
+
+      return items.map((item) => {
+          const title = getTextContent(item, 'title');
+          const linkNode = item.querySelector('link');
+          const link = linkNode?.getAttribute('href') || linkNode?.textContent; 
+          
+          return {
+            title: title || 'Notizia senza titolo',
+            link: link || '#',
+            description: getTextContent(item, 'description') || getTextContent(item, 'summary') || '',
+            enclosureUrl: getMediaUrl(item),
+            source: source.name,
+            pubDate: new Date(getTextContent(item, 'pubDate') || getTextContent(item, 'updated') || Date.now()),
+          }
+      }).filter(item => item.title && item.link);
+
+    } catch (error) {
+      console.error("Errore nel fetch dell'RSS da", source.name, error);
+      return [];
+    }
+  };
+
+  const loadNews = async () => {
+    setLoadingNews(true);
+    try {
+      const newsPromises = RSS_SOURCES.map(source => fetchRSS(source));
+      const results = await Promise.all(newsPromises);
+      
+      let allNews: RSSItem[] = results.flat();
+
+      // Implementazione della deduplicazione (rimuove notizie con titolo e link uguali)
+      const uniqueNewsMap = new Map<string, RSSItem>();
+      allNews.forEach(item => {
+        // Usa una combinazione di titolo e link come chiave di unicità
+        const key = item.title + item.link;
+        if (!uniqueNewsMap.has(key)) {
+          uniqueNewsMap.set(key, item);
+        }
+      });
+
+      const uniqueAndSortedNews = Array.from(uniqueNewsMap.values())
+        .sort((a, b) => b.pubDate.getTime() - a.pubDate.getTime()); 
+
+      setNews(uniqueAndSortedNews.slice(0, TOTAL_NEWS_COUNT)); 
+    } catch (err) {
+      console.error("Errore aggregazione RSS:", err);
+    } finally {
+      setLoadingNews(false);
+    }
+  };
+
+  // Logica per il caricamento iniziale e l'aggiornamento automatico (2 minuti)
+  useEffect(() => {
+    loadNews(); // Caricamento iniziale
+
+    const intervalId = setInterval(() => {
+      console.log("Aggiornamento notizie automatico in corso...");
+      loadNews(); // Ricarica ogni 2 minuti
+    }, 120000); // 120000 ms = 2 minuti
+
+    // Pulizia dell'interval al smontaggio del componente
+    return () => clearInterval(intervalId);
+  }, []);
+
+  // Suddivisione delle notizie per il layout
+  const newsBottomLeft = news.slice(0, NEWS_BOTTOM_LEFT_COUNT);
+  const newsTopRight = news.slice(NEWS_BOTTOM_LEFT_COUNT, NEWS_BOTTOM_LEFT_COUNT + NEWS_TOP_RIGHT_COUNT);
+  const newsMiddleRight = news.slice(
+    NEWS_BOTTOM_LEFT_COUNT + NEWS_TOP_RIGHT_COUNT,
+    NEWS_BOTTOM_LEFT_COUNT + NEWS_TOP_RIGHT_COUNT + NEWS_MIDDLE_RIGHT_COUNT
+  );
+  const newsForCarousel = news.slice(
+    NEWS_BOTTOM_LEFT_COUNT + NEWS_TOP_RIGHT_COUNT + NEWS_MIDDLE_RIGHT_COUNT,
+    TOTAL_NEWS_COUNT
+  );
+
+  const startIndexForCarousel = NEWS_BOTTOM_LEFT_COUNT + NEWS_TOP_RIGHT_COUNT + NEWS_MIDDLE_RIGHT_COUNT;
+
 
   return (
-    <>
-
-      {/* Struttura JSX */}
-      <div className="page">
-        <header className="header">
-          <h1>📰 Notizie in Tempo Reale</h1>
-        </header>
-
-        {/* Classe news-container e stile dinamico per l'animazione */}
-        <div className={`main-layout-complex news-container ${isFading ? 'is-fading' : ''}`}>
+    <div className="page">
+      <header className="header">
+        <h1>📰 Dashboard Notizie & Aggiornamenti Live</h1>
+      </header>
+      
+      {loadingNews && news.length === 0 && (
+        <div className="loading-overlay">Caricamento Notizie...</div>
+      )}
+      
+      {news.length > 0 && (
+        <div className="main-layout-complex">
           
-          {/* Colonna Sinistra */}
+          {/* Colonna Sinistra (Video + Notizie Verticali) */}
           <div className="left-column">
-            
-            {/* 1. Video (Alto a Sinistra) - Sticky per un'esperienza migliore */}
             <div className="video-side">
               <iframe
                 src="https://www.youtube.com/embed/pUcmpyynASM?autoplay=1&mute=1"
@@ -284,35 +200,46 @@ const App: React.FC = () => {
               ></iframe>
             </div>
             
-            {/* 2. Notizie in basso a sinistra (4 card verticali in 2x2 grid) */}
+            {/* Notizie sotto il video (Verticali) */}
             <div className="news-grid-bottom-left">
-              {newsBottomLeft.map((item, index) => renderCard(item, index, 'vertical'))}
+              {newsBottomLeft.map((item: RSSItem, index: number) => renderCard(item, index, 'vertical'))}
             </div>
           </div>
 
-          {/* Colonna Destra */}
-          <div className="right-column">
-            
-            {/* 3. Destra Orizzontale Grande (1 card) */}
+          {/* Colonna Centrale (Resto delle Notizie) */}
+          <div className="center-column-news">
+
+  {/* Carosello Notizie Dal Mondo */}
+            <div className="news-bottom-right-carousel">
+              <NewsCarousel 
+                  newsItems={newsForCarousel} 
+                  startIndex={startIndexForCarousel}
+              />
+            </div>
+
+            {/* Card Orizzontale Grande (Top Right) */}
             <div className="news-top-right">
-              {newsTopRight.map((item, index) => renderCard(item, index + NEWS_BOTTOM_LEFT_COUNT, 'horizontal-large'))}
+              {newsTopRight.map((item: RSSItem, index: number) => renderCard(item, index + NEWS_BOTTOM_LEFT_COUNT, 'horizontal-large'))}
             </div>
 
-            {/* 4. Destra Orizzontale Piccola (4 card orizzontali in 2x2 grid) */}
+            {/* Due Righe di Card Orizzontali Piccole (Middle Right) */}
             <div className="news-middle-right">
-              {newsMiddleRight.map((item, index) => renderCard(item, index + NEWS_BOTTOM_LEFT_COUNT + NEWS_TOP_RIGHT_COUNT, 'horizontal-small'))}
+              {newsMiddleRight.map((item: RSSItem, index: number) => renderCard(item, index + NEWS_BOTTOM_LEFT_COUNT + NEWS_TOP_RIGHT_COUNT, 'horizontal-small'))}
             </div>
             
-            {/* 5. Destra in Basso (Card extra per riempire lo spazio) */}
-            <h2 style={{ fontSize: '20px', color: '#555', marginTop: '10px' }}>Altre Notizie Dal Mondo</h2>
-            <div className="news-bottom-right-extra">
-              {newsBottomRightExtra.map((item, index) => renderCard(item, index + NEWS_BOTTOM_LEFT_COUNT + NEWS_TOP_RIGHT_COUNT + NEWS_MIDDLE_RIGHT_COUNT, 'vertical'))}
-            </div>
-
+            
+          </div>
+          
+          {/* Colonna Destra (Meteo) */}
+          <div className="right-column-weather">
+              <WeatherCarousel />
           </div>
         </div>
-      </div>
-    </>
+      )}
+      {loadingNews && news.length > 0 && (
+        <div className="loading-overlay-small">Aggiornamento Notizie...</div>
+      )}
+    </div>
   );
 };
 

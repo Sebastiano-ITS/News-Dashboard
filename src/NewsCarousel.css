@@ -1,0 +1,69 @@
+/* ---------------------------------- */
+/* STILI CAROSELLO NOTIZIE (NewsCarousel.tsx) */
+/* ---------------------------------- */
+.news-bottom-right-carousel {
+    /* Contenitore per il carosello */
+    position: relative;
+    overflow: hidden; /* Nasconde le card che non rientrano nella vista */
+    padding-bottom: 20px; /* Spazio per i puntini di navigazione */
+}
+
+.news-carousel-container {
+    display: flex;
+    flex-direction: column;
+}
+
+.news-carousel-track {
+    display: flex;
+    /* La larghezza totale è data dalla somma di tutte le slide */
+    width: 100%; 
+}
+
+.carousel-item {
+    /* Ogni item occupa il 100% del contenitore visibile e non si restringe */
+    flex: 0 0 100%; 
+    box-sizing: border-box;
+    padding: 0 5px; /* Spazio interno per separare leggermente le card */
+}
+
+/* NUOVI STILI PER CAROSELLO COMPATTO E TITOLO GRANDE */
+.card.compact-carousel-card {
+    height: 300px; /* Riduzione da 380px a 300px per renderla più compatta */
+}
+.card.compact-carousel-card img {
+    height: 120px; /* Immagine più piccola */
+}
+.card.compact-carousel-card .content {
+    flex-grow: 1;
+    justify-content: space-between;
+}
+.card.compact-carousel-card h3 {
+    font-size: 20px; /* Titolo più grande */
+    font-weight: 700;
+    -webkit-line-clamp: 6; /* Più spazio per il titolo, visto che non c'è descrizione */
+}
+
+
+/* Punti di navigazione */
+.carousel-dots {
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: #ccc;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.dot.active {
+    background-color: #00838F; /* Colore tema per il puntino attivo */
+}

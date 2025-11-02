@@ -1,9 +1,10 @@
 body {
   margin: 0;
   font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  /* Tema Chiaro */
+  /* CAMBIO TEMA: Sfondo chiaro */
   background: #f0f0f0;
   color: #333333;
+  min-height: 100vh;
 }
 
 .page {
@@ -11,7 +12,6 @@ body {
   flex-direction: column;
   align-items: center;
   min-height: 100vh; 
-  /* Assicura che la pagina occupi tutta la larghezza */
   width: 100%;
 }
 
@@ -19,281 +19,353 @@ body {
   text-align: center;
   width: 100%;
   /* Header chiaro */
-  background: linear-gradient(180deg, #ffffff 0%, #e8e8e8 100%);
+  background: linear-gradient(180deg, #ffffff 0%, #f0f0f0 100%);
   padding: 16px 0; 
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  position: sticky;
-  top: 0;
-  z-index: 10;
+  color: #004d40; /* Verde scuro/Teal */
 }
-
 .header h1 {
-  font-size: 28px; 
-  font-weight: 700;
-  color: #1a1a1a;
-  letter-spacing: 1px;
-  margin: 0;
+    font-size: 32px;
+    font-weight: 700;
+    margin: 0;
 }
 
-/* --- Animazione di Rotazione --- */
-.news-container.is-fading {
-    opacity: 0;
-    transition: opacity 0.5s ease-out;
-}
-
-.news-container {
-    opacity: 1;
-    transition: opacity 0.5s ease-in;
-}
-
-/* --- Layout a 2 Colonne Ottimizzato per Full Width --- */
+/* ---------------------------------- */
+/* NUOVO Layout a 3 Colonne */
+/* ---------------------------------- */
 .main-layout-complex {
   display: grid;
-  /* Colonna sinistra per video e 4 card, colonna destra per tutto il resto */
-  grid-template-columns: minmax(350px, 1.4fr) 2fr; 
+  /* Colonna 1 (Video+News) | Colonna 2 (News) | Colonna 3 (Meteo) */
+  grid-template-columns: 2fr 1.5fr 1fr; 
   gap: 24px;
   width: 100%; 
-  /* Rimosso il padding orizzontale dal container principale */
-  padding: 20px 0 24px 0; 
-  box-sizing: border-box;
+  padding: 0 16px 24px 16px; 
+  margin-top: 20px; 
   align-items: start;
-  /* Rimosso max-width per occupare tutto lo schermo */
+  box-sizing: border-box;
+  max-width: 1600px; 
 }
 
-.left-column {
-  display: flex;
-  flex-direction: column;
-  gap: 20px; 
-  padding-left: 24px; /* Gestisce lo spazio sul lato sinistro */
+.left-column, .center-column-news, .right-column-weather {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
 }
 
-.right-column {
-  display: flex;
-  flex-direction: column;
-  gap: 20px; 
-  padding-right: 24px; /* Gestisce lo spazio sul lato destro */
-}
-
-/* Video (Alto a Sinistra) */
+/* Colonna sinistra (Video + Notizie) */
 .video-side {
-    top: 90px;
+  position: sticky;
+  top: 20px;
+  width: 100%;
 }
 .video-side iframe {
   width: 100%;
-  height: 580px;
-  border-radius: 14px;
-  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.15);
+  aspect-ratio: 16/9; 
+  border-radius: 12px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
 }
 
-/* Notizie Basso Sinistra (2x2 grid) */
+/* Griglia per le 3 card sotto il video */
 .news-grid-bottom-left {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   gap: 16px;
 }
 
-/* Notizie Centro Destra (2x2 grid) */
-.news-middle-right {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr 1fr;
-  gap: 16px;
+/* Titolo della sezione extra, ora usato sopra il carosello */
+.section-title-extra {
+    font-size: 20px;
+    font-weight: 600;
+    color: #4a4a4a;
+    margin: 0 0 10px 0; /* Spazio sotto il titolo */
+    padding-bottom: 5px;
+    border-bottom: 2px solid #e0e0e0;
 }
 
-/* Notizie Basso Destra (Grid per riempire lo spazio) */
-.news-bottom-right-extra {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 16px;
-}
 
-/* --- Stili Card Generici --- */
+/* Card Styles (News) */
 .card {
-  border-radius: 14px;
+  border-radius: 12px;
   overflow: hidden;
   background: #ffffff;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
   transition: transform 0.3s ease, box-shadow 0.3s ease;
   cursor: pointer;
   border: 1px solid #e0e0e0;
-  min-height: 100px;
-  width: 100%; 
+  text-decoration: none; /* Rimosso underline per il link */
+  color: inherit;
+  display: flex;
+  flex-direction: column;
 }
 
 .card:hover {
   transform: translateY(-3px);
-  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+}
+
+.card img {
+  width: 100%;
+  height: 180px;
+  object-fit: cover;
+  display: block;
 }
 
 .card .content {
-  padding: 14px 16px;
+  padding: 12px;
   display: flex;
   flex-direction: column;
   gap: 6px;
   flex-grow: 1;
 }
 
-.card .news-source {
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
-  color: #888888;
-}
-
 .card h3 {
-  font-size: 16px; 
-  font-weight: 700;
-  color: #186be7; 
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  font-size: 16px;
+  font-weight: 600;
   margin: 0;
-  overflow: hidden;
+  line-height: 1.3;
+  color: #004d40;
   display: -webkit-box;
-  -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  -webkit-line-clamp: 3;
 }
 
 .card p {
   font-size: 13px;
-  color: #555555;
-  max-height: 40px; 
-  overflow: hidden;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
+  color: #555;
   margin: 0;
-}
-
-.card a {
-  color: #0066cc;
-  text-decoration: none;
-  font-weight: 700;
-  font-size: 12px;
-  align-self: flex-start;
-  margin-top: 6px;
-}
-
-/* --- Card Layout Tipi Specifici --- */
-
-/* 1. Card Verticale (Basso Sinistra e Extra Destra) */
-.card.card-vertical {
-  display: flex;
-  flex-direction: column;
-  height: auto;
-}
-.card.card-vertical img {
-  width: 100%;
-  height: 120px;
-  object-fit: cover;
-  border-radius: 14px 14px 0 0; 
-}
-
-/* 2. Card Orizzontale Grande (Top Right) */
-.card.card-horizontal-large {
-  display: flex;
-  flex-direction: row; 
-  min-height: 220px;
-  align-items: stretch;
-}
-.card.card-horizontal-large img {
-  width: 300px; 
-  height: 100%; 
-  border-radius: 14px 0 0 14px;
-}
-.card.card-horizontal-large .content {
-    padding: 20px;
-}
-.card.card-horizontal-large h3 {
-  font-size: 24px;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
   -webkit-line-clamp: 3;
-}
-.card.card-horizontal-large p {
-  display: block; 
-  max-height: 100px; 
-  -webkit-line-clamp: 4;
+  flex-grow: 1;
 }
 
-/* 3. Card Orizzontale Piccola (Middle Right - 2x2 grid) */
-.card.card-horizontal-small {
-  display: flex;
-  flex-direction: column;
-  min-height: 100px;
-  align-items: center; 
+.card .card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 8px;
+    font-size: 12px;
+    font-weight: 500;
+    color: #00838F;
 }
-.card.card-horizontal-small img {
+
+.card .source-tag {
+    background-color: #e0f2f1;
+    color: #004d40;
+    padding: 3px 6px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+
+/* Card Verticale (default per news-grid-bottom-left) */
+.card.vertical img {
+  height: 140px; 
+}
+
+/* Card Orizzontale Piccola (Middle Right - 2 righe in 2 colonne) */
+.news-middle-right {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+.card.horizontal-small {
+  flex-direction: row;
+  align-items: center;
+  height: 90px;
+  padding: 8px;
+}
+.card.horizontal-small .content {
+    padding: 0 0 0 8px;
+    gap: 3px;
+    justify-content: center;
+}
+.card.horizontal-small h3 {
+    font-size: 14px;
+    -webkit-line-clamp: 2;
+}
+.card.horizontal-small p {
+    display: none; /* Nasconde la descrizione per compattare */
+}
+.card.horizontal-small .card-footer {
+    font-size: 11px;
+    margin-top: 0;
+}
+
+/* Card Orizzontale Grande (Top Right) */
+.news-top-right {
+    display: flex; /* Contiene solo 1 card */
+}
+.card.horizontal-large {
+  flex-direction: row;
+  height: 180px;
+  width: 100%;
+}
+.card.horizontal-large img {
+  width: 200px; 
+  height: 100%; 
+}
+.card.horizontal-large .content h3 {
+  font-size: 20px;
+}
+
+/* ---------------------------------- */
+/* STILI CAROSELLO NOTIZIE (NewsCarousel.tsx) */
+/* ---------------------------------- */
+.news-bottom-right-carousel {
+    /* Contenitore per il carosello */
+    position: relative;
+    overflow: hidden; /* Nasconde le card che non rientrano nella vista */
+    padding-bottom: 20px; /* Spazio per i puntini di navigazione */
+}
+
+.news-carousel-container {
+    display: flex;
+    flex-direction: column;
+}
+
+.news-carousel-track {
+    display: flex;
+    /* La larghezza totale è data dalla somma di tutte le slide */
     width: 100%; 
-    height: 100px;
-    border-radius: 14px 0 0 14px;
 }
-.card.card-horizontal-small .content {
-    padding: 10px 14px;
-    gap: 4px;
+
+.carousel-item {
+    /* Ogni item occupa il 100% del contenitore visibile e non si restringe */
+    flex: 0 0 100%; 
+    box-sizing: border-box;
+    padding: 0 5px; /* Spazio interno per separare leggermente le card */
 }
-.card.card-horizontal-small p {
-    display: none;
+
+.carousel-card {
+    /* Stile specifico per le card dentro il carosello */
+    height: 380px; /* Altezza fissa per coerenza */
+}
+.carousel-card .content {
+    flex-grow: 1;
+    justify-content: space-between;
+}
+.carousel-card h3 {
+    -webkit-line-clamp: 5; /* Più spazio per il titolo */
 }
 
 
-/* --- Responsive (Mobile) --- */
-@media (max-width: 1024px) {
+/* Punti di navigazione */
+.carousel-dots {
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: #ccc;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.dot.active {
+    background-color: #00838F; /* Colore tema per il puntino attivo */
+}
+
+
+
+
+/* Stato di Caricamento/Errore */
+.status-message {
+  text-align: center;
+  padding: 30px 10px;
+  font-size: 16px;
+  color: #00ACC1;
+  font-weight: 500;
+}
+
+.error-message {
+    color: #D32F2F;
+    background: #FFEBEE;
+    border-radius: 10px;
+    border: 1px solid #D32F2F;
+}
+
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(240, 240, 240, 0.9);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 24px;
+    font-weight: bold;
+    color: #004d40;
+    z-index: 1000;
+}
+
+
+/* ---------------------------------- */
+/* Responsive */
+/* ---------------------------------- */
+@media (max-width: 1280px) {
+    .main-layout-complex {
+        /* Layout a 2 colonne: Notizie (3fr) | Meteo (1fr) */
+        grid-template-columns: 3fr 1fr;
+    }
+    /* Su schermi più piccoli di 1280px, la colonna centrale e il carosello vengono nascosti per semplicità */
+    .center-column-news, .news-bottom-right-carousel {
+        display: none; 
+    }
+    .left-column {
+        grid-column: 1 / -1; 
+    }
+    .video-side {
+        position: static; 
+    }
+}
+
+
+@media (max-width: 900px) {
   .main-layout-complex {
+    /* Layout a 1 colonna */
     grid-template-columns: 1fr;
-    /* Rimosso il padding orizzontale */
-    padding: 20px 0 16px 0; 
+    padding: 0 16px 16px 16px; 
   }
 
-  /* Aggiunge padding alle colonne per il mobile */
-  .left-column {
-    padding-left: 16px;
-    padding-right: 16px;
-    gap: 16px; 
-    width: 100%; 
-  }
-  .right-column {
-    padding-left: 16px;
-    padding-right: 16px;
-    gap: 16px; 
-    width: 100%; 
+  .left-column, .right-column-weather {
+    width: 100%;
+    order: initial;
   }
   
-  .video-side {
+  /* Ordina il meteo in cima, subito sotto l'header */
+  .right-column-weather {
+    order: -1; 
     position: static;
     top: auto;
-  }
-  .video-side iframe {
-    height: 300px;
+    padding: 0;
   }
   
-  /* Tutte le griglie a 1 colonna */
-  .news-grid-bottom-left,
-  .news-middle-right,
-  .news-bottom-right-extra {
-    grid-template-columns: 1fr ;
+  .news-grid-bottom-left {
+    grid-template-columns: 1fr; /* Una sola colonna sotto il video su mobile */
   }
   
-  /* Forza tutte le card a essere verticali su mobile */
-  .card, 
-  .card-horizontal-large, 
-  .card-horizontal-small {
-    flex-direction: column !important; 
-    min-height: auto;
+  .card.horizontal-large {
+    flex-direction: column;
+    height: auto;
   }
-  
-  .card img,
-  .card-horizontal-large img,
-  .card-horizontal-small img {
-    width: 100% !important;
-    height: 180px !important; 
-    border-radius: 14px 14px 0 0 !important;
-  }
-
-  /* Riabilita la descrizione su mobile */
-  .card p {
-     display: block !important; 
-     max-height: 50px;
-     -webkit-line-clamp: 2;
-  }
-  .card h3 {
-     font-size: 18px !important;
-     -webkit-line-clamp: 3;
+  .card.horizontal-large img {
+    width: 100%;
+    height: 180px;
   }
 }

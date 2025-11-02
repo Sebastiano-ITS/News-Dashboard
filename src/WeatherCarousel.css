@@ -1,0 +1,100 @@
+/* 1. Container Principale (Card del Meteo) */
+.weather-card {
+  width: 320px;
+  background: rgba(172, 232, 229, 0.8); /* Sfondo semi-trasparente */
+  backdrop-filter: blur(10px); /* Effetto vetro smerigliato */
+  border-radius: 20px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  padding: 25px;
+  box-sizing: border-box;
+  text-align: center;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  transition: transform 0.5s ease;
+  min-height: 250px; /* Altezza fissa minima per prevenire CLS */
+}
+
+/* 2. Titolo della Città */
+.weather-city {
+  font-size: 24px;
+  font-weight: 700;
+  color: #004d40; /* Verde scuro per il contrasto */
+  margin-top: 0;
+  margin-bottom: 5px;
+}
+
+.weather-country {
+    font-size: 16px;
+    font-weight: 400;
+    color: #555;
+}
+
+/* 3. Sezione Informazioni Principali (Temperatura + Condizione) */
+.weather-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 15px 0 25px 0;
+}
+
+/* 4. Temperatura */
+.weather-temp {
+  font-size: 72px;
+  font-weight: 200;
+  color: #00838F; /* Blu brillante */
+  line-height: 1;
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.weather-temp::after {
+    content: 'C';
+    font-size: 24px;
+    position: relative;
+    top: -20px;
+    font-weight: 500;
+    margin-left: 2px;
+    color: #00838F;
+}
+
+/* 5. Icona e Testo Condizione */
+.weather-condition {
+  font-size: 18px;
+  color: #546E7A;
+  font-weight: 500;
+  margin-top: 5px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.condition-icon {
+    /* Stile per le icone emoji/lucide */
+    font-size: 20px;
+}
+
+/* 6. Dettagli (Umidità e Vento) */
+.weather-details {
+  display: flex;
+  justify-content: space-around;
+  padding: 10px 0;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+  margin-top: 15px;
+}
+
+.weather-details span {
+  font-size: 16px;
+  color: #333333;
+  font-weight: 500;
+}
+
+/* 7. Stato di Caricamento/Errore */
+.weather-loading, .weather-error {
+  padding: 80px 10px;
+  font-size: 18px;
+  color: #00838F;
+}
+
+.weather-error {
+  color: #D32F2F;
+}
