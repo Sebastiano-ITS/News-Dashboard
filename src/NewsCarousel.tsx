@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react'; // Importazioni esplicite di React Hooks
-
+// Importa gli stili globali (assumiamo che il file App.css sia in grado di stilizzare anche questo componente)
+import "./NewsCarousel.css"; // Rimuovo questo import se lo stile è in App.css
 
 // Interfaccia news passata come props
 interface RSSItem {
@@ -19,29 +20,47 @@ interface NewsCarouselProps {
 // L'intervallo di rotazione è impostato a 5 secondi (5000ms)
 const ROTATION_INTERVAL_MS = 5000; 
 
-// Funzione di rendering della card (stili compatti e titoli grandi)
+/**
+ * Funzione di rendering della card per il carosello.
+ */
 const renderCard = (item: RSSItem, index: number) => {
-    // Dato che il filtro avviene nel componente principale, qui ha sempre un'immagine
+    // Ora la presenza dell'immagine non è garantita
     const hasImage = !!item.enclosureUrl;
     
+    // La card senza immagine avrà uno stile di sfondo leggermente diverso e più testo visibile
     return (
         <a 
             key={index} 
             href={item.link} 
             target="_blank" 
             rel="noopener noreferrer"
-            // Usa la classe 'compact-carousel-card' per gli stili modificati in CSS
-            className={`card vertical compact-carousel-card ${hasImage ? 'with-img' : 'without-img'}`}
+            // Se non c'è immagine, uso una classe specifica
+            className={`card card-carousel-item ${hasImage ? 'with-img' : 'without-img'}`}
             onClick={(e) => e.stopPropagation()} 
         >
-            {/* L'immagine è ora obbligatoria per apparire nel carosello */}
-            {hasImage && <img 
-                src={item.enclosureUrl} 
-                alt={item.title} 
-                onError={(e) => (e.currentTarget.src = 'https://placehold.co/400x200/cccccc/333333?text=Nessuna+Immagine')} 
-            />}
+            {/* Immagine: mostrata solo se presente. Usa un'altezza fissa. */}
+            {hasImage ? (
+                <img 
+                    src={item.enclosureUrl} 
+                    alt={item.title} 
+                    // Fallback con placeholder generico
+                    onError={(e) => (e.currentTarget.src = 'https://placehold.co/400x200/cccccc/333333?text=Nessuna+Immagine')} 
+                />
+            ) : (
+                // Placeholder testuale per quando manca l'immagine
+                <div className="carousel-text-placeholder">
+                </div>
+            )}
+
             <div className="content">
+                {/* Il titolo usa sempre la classe del carosello */}
                 <h3 className="card-title-carousel">{item.title}</h3>
+                
+                {/* Se non c'è immagine, mostro una breve descrizione per riempire lo spazio */}
+                {!hasImage && item.description && (
+                    <p className="carousel-desc-only-text" dangerouslySetInnerHTML={{ __html: item.description.substring(0, 100) + '...' }}></p>
+                )}
+
                 <div className="card-footer">
                     <span className="source-tag">{item.source}</span>
                 </div>
@@ -54,11 +73,13 @@ const renderCard = (item: RSSItem, index: number) => {
 const NewsCarousel: React.FC<NewsCarouselProps> = ({ newsItems, startIndex }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
 
-  // LOGICA CHIAVE: Filtra l'array per includere SOLO le notizie con immagine (enclosureUrl)
+  // LOGICA CHIAVE MODIFICATA: L'array da visualizzare è ora l'array completo newsItems
+  // (che contiene già le notizie che non sono state usate nel layout principale).
+  // NON filtriamo più per la presenza dell'immagine qui.
   const newsToDisplay = useMemo(() => {
-      return newsItems.filter(item => !!item.enclosureUrl);
-  }, [newsItems]); // Rifiltra solo se newsItems cambia
-
+      // Potresti voler limitare il numero totale di notizie nel carosello per performance, ad esempio a 20.
+      return newsItems.slice(0, 20); 
+  }, [newsItems]); 
 
   // Effetto per la rotazione automatica
   useEffect(() => {
@@ -74,21 +95,22 @@ const NewsCarousel: React.FC<NewsCarouselProps> = ({ newsItems, startIndex }) =>
 
   if (newsToDisplay.length === 0) {
     // Messaggio più specifico quando non ci sono notizie filtrate
-    return <div className="status-message">Nessuna notizia con immagine disponibile per il carosello.</div>;
+    return <div className="status-message">Nessuna notizia extra disponibile per il carosello.</div>;
   }
   
   // Stile per far scorrere il track
   const transformStyle = {
+    // La trasformazione è basata su -currentIndex * 100%, dove 100% è la larghezza di un singolo elemento del carosello
     transform: `translateX(-${currentIndex * 100}%)`,
     transition: 'transform 0.5s ease-in-out',
   };
 
   return (
     <div className="news-carousel-container">
-        <h2 className="section-title-extra">Ultime Notizie con Immagine</h2>
+        <h2 className="section-title-extra">Ultime Notizie (Scorri)</h2>
         
         <div className="news-carousel-track" style={transformStyle}>
-            {/* Mappa sull'array filtrato */}
+            {/* Mappa sull'array completo (con e senza immagine) */}
             {newsToDisplay.map((item: RSSItem, index: number) => (
                 <div key={startIndex + index} className="carousel-item">
                     {renderCard(item, startIndex + index)}
@@ -98,7 +120,7 @@ const NewsCarousel: React.FC<NewsCarouselProps> = ({ newsItems, startIndex }) =>
         
         {/* Punti di navigazione */}
         <div className="carousel-dots">
-            {/* Mappa sull'array filtrato per i punti */}
+            {/* Mappa sull'array completo per i punti */}
             {newsToDisplay.map((_, index: number) => (
                 <span 
                     key={index}

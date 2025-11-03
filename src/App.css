@@ -43,7 +43,7 @@ body {
   margin-top: 20px; 
   align-items: start;
   box-sizing: border-box;
-  max-width: 1600px; 
+   
 }
 
 .left-column, .center-column-news, .right-column-weather {
@@ -68,7 +68,7 @@ body {
 /* Griglia per le 3 card sotto il video */
 .news-grid-bottom-left {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  grid-template-columns: repeat(2, minmax(150px, 2fr));
   gap: 16px;
 }
 
@@ -119,16 +119,13 @@ body {
 }
 
 .card h3 {
-  font-size: 16px;
+  font-size: 26px;
   font-weight: 600;
   margin: 0;
   line-height: 1.3;
   color: #004d40;
   display: -webkit-box;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  -webkit-line-clamp: 3;
+
 }
 
 .card p {
@@ -186,8 +183,7 @@ body {
     justify-content: center;
 }
 .card.horizontal-small h3 {
-    font-size: 14px;
-    -webkit-line-clamp: 2;
+    font-size: 18px;
 }
 .card.horizontal-small p {
     display: none; /* Nasconde la descrizione per compattare */

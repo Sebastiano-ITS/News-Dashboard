@@ -209,7 +209,7 @@ const App: React.FC = () => {
           {/* Colonna Centrale (Resto delle Notizie) */}
           <div className="center-column-news">
 
-  {/* Carosello Notizie Dal Mondo */}
+          {/* Carosello Notizie Dal Mondo */}
             <div className="news-bottom-right-carousel">
               <NewsCarousel 
                   newsItems={newsForCarousel} 
